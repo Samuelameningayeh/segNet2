@@ -9,17 +9,28 @@ import torchvision.transforms.functional as F_vision
 
 class CamVidDataset(Dataset):
     """
-    list_path: txt file; each line:
-      /path/to/image.png  /path/to/mask.png
-
-    Images: RGB
-    Masks: single-channel, class indices (0..C-1)
+    Each line in txt file has:
+        /SegNet/CamVid/train/img.png   /SegNet/CamVid/trainannot/img.png
+    
+    We must remove the leading '/SegNet/' so it works on the user's computer.
     """
     def __init__(self, list_path, img_size=(360, 480)):
         self.img_size = img_size
 
+        self.samples = []
         with open(list_path, "r") as f:
-            self.samples = [ln.strip().split() for ln in f if ln.strip()]
+            for line in f:
+                if not line.strip():
+                    continue
+                img_path, mask_path = line.strip().split()
+
+                # === FIX 1: remove "/SegNet/" for local paths ===
+                if img_path.startswith('/SegNet/'):
+                    img_path = img_path.replace('/SegNet/', '')
+                if mask_path.startswith('/SegNet/'):
+                    mask_path = mask_path.replace('/SegNet/', '')
+
+                self.samples.append((img_path, mask_path))
 
     def __len__(self):
         return len(self.samples)
@@ -30,7 +41,7 @@ class CamVidDataset(Dataset):
         img = Image.open(img_path).convert("RGB")
         mask = Image.open(mask_path).convert("L")
 
-        # Resize consistently
+        # Resize consistently (SegNet standard)
         img = F_vision.resize(img, self.img_size,
                               interpolation=F_vision.InterpolationMode.BILINEAR)
         mask = F_vision.resize(mask, self.img_size,
@@ -44,7 +55,6 @@ class CamVidDataset(Dataset):
             std=[0.229, 0.224, 0.225],
         )
 
-        # Mask → LongTensor (H, W)
         mask_np = np.array(mask, dtype=np.int64)
         mask_tensor = torch.from_numpy(mask_np).long()
 
