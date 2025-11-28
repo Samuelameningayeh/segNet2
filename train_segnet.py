@@ -98,7 +98,7 @@ def main():
     # ----- model -----
     model = SegNet(num_classes=num_classes, in_channels=3).to(device)
 
-    # ----- loss -----
+    # ----- Loss -----
     if use_median_freq:
         print("Computing class weights...")
         class_weights = compute_class_weights(
@@ -108,9 +108,16 @@ def main():
     else:
         class_weights = None
 
-    criterion = nn.CrossEntropyLoss(
-        weight=class_weights, ignore_index=ignore_index
-    )
+    # Only pass ignore_index if it's not None
+    if ignore_index is not None:
+        criterion = nn.CrossEntropyLoss(
+            weight=class_weights,
+            ignore_index=ignore_index
+        )
+    else:
+        criterion = nn.CrossEntropyLoss(
+            weight=class_weights
+        )
 
     # ----- optimizer & scheduler -----
     optimizer = optim.SGD(
