@@ -70,8 +70,10 @@ def evaluate(model, loader, criterion,
 
 def main():
     # ----- config -----
-    train_txt = "SegNet/CamVid/train.txt"  # change if needed
-    val_txt = "SegNet/CamVid/val.txt"
+    train_txt = "CamVid/train.txt"
+    val_txt   = "CamVid/val.txt"
+    test_txt  = "CamVid/test.txt"
+
 
     img_size = (360, 480)
     num_classes = 12          # your masks have values 0..11
